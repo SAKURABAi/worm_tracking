@@ -1,0 +1,74 @@
+stage->WriteCommand("XQ#WORM\r");
+stage->WriteCommand("XQ#EXIT\r");
+
+void SetCurrentPID(PID x_pid, PID y_pid);
+inline QString Get_PID_Description(PID x_pid, PID y_pid){
+    return ("X(" + QString::number(x_pid.KP) + ", " + QString::number(x_pid.KI) + ", " + QString::number(x_pid.KD)+"), Y("+ QString::number(y_pid.KP) + ", " +
+                QString::number(y_pid.KI) + ", " + QString::number(y_pid.KD) + ")");
+}
+
+//Offset Post-Process
+TranslationStage *stage;
+PID x_PID;
+PID y_PID;
+
+void OnTranslationStageConnected();
+void OnTranslationStageDisconnected();
+
+
+void TrackingParametersSettingDialog::OnTranslationStageConnected()
+{
+    try{
+        /*if (controller1 == NULL){
+            QMessageBox::critical(NULL,"Warning"," Motorized translation stage not connected");
+            return;
+        }
+        stage = new TranslationStage(controller1); //controller1 must be allocated!*/
+        if (stage == NULL || !stage->IsConnected()){
+            QMessageBox::critical(NULL,"Warning"," Motorized translation stage not connected");
+            return;
+        }
+        stage->Connect();
+    }catch (string e){
+        QMessageBox::critical(NULL,"Warning",QString::fromStdString(e));
+    }catch (QException e){
+        QMessageBox::critical(NULL,"Warning",QString::fromStdString(e.getMessage()));
+    }
+}
+
+void TrackingParametersSettingDialog::OnTranslationStageDisconnected()
+{
+    if (stage!=NULL){
+    	delete stage;
+    	stage = NULL;
+	}
+}
+    
+void TrackingParametersSettingDialog::SetCurrentPID(PID x_pid, PID y_pid)
+{
+    if (stage!=NULL && stage->IsConnected()){
+        try{
+            stage->X_Set_PID(x_pid);
+            stage->Y_Set_PID(y_pid);
+            cout <<"Set translation stage PID successfully"<<endl;
+        } catch(QException e){
+            cout<<e.getMessage()<<endl;
+            return;
+        }
+    
+        //Set Current PID
+        x_PID.SP = x_pid.SP;
+        x_PID.AC = x_pid.AC;
+        x_PID.DC = x_pid.DC;
+        x_PID.KP = x_pid.KP;
+        x_PID.KI = x_pid.KI;
+        x_PID.KD = x_pid.KD;
+
+        y_PID.SP = y_pid.SP;
+        y_PID.AC = y_pid.AC;
+        y_PID.DC = y_pid.DC;
+        y_PID.KP = y_pid.KP;
+        y_PID.KI = y_pid.KI;
+        y_PID.KD = y_pid.KD;
+    }
+}
